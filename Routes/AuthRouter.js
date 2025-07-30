@@ -1,5 +1,12 @@
 import express from "express";
-import { signup, login } from "../Controllers/AuthController.js";
+import {
+  signup,
+  login,
+  deleteUser,
+  getUser,
+  getSingleUser,
+  updateUser,
+} from "../Controllers/AuthController.js";
 import {
   signupValidation,
   loginValidation,
@@ -15,5 +22,11 @@ AuthRouter.get("/health", (req, res) => {
 // Auth routes
 AuthRouter.post("/signup", signupValidation, signup);
 AuthRouter.post("/login", loginValidation, login);
+
+// CURD Operations
+AuthRouter.get("/users", getUser);
+AuthRouter.get("/users/:id", getSingleUser);
+AuthRouter.put("/users/:id", updateUser);
+AuthRouter.delete("/users/:id", deleteUser);
 
 export default AuthRouter;
