@@ -6,6 +6,8 @@ import {
   getUser,
   getSingleUser,
   updateUser,
+  updateProfile,
+  changePassword,
 } from "../Controllers/AuthController.js";
 import {
   signupValidation,
@@ -28,5 +30,7 @@ AuthRouter.get("/users", getUser);
 AuthRouter.get("/users/:id", getSingleUser);
 AuthRouter.put("/users/:id", updateUser);
 AuthRouter.delete("/users/:id", deleteUser);
+AuthRouter.put("/users/update-profile/:id", updateProfile);
+AuthRouter.put("/users/change-password/:id", changePassword);
 
 export default AuthRouter;

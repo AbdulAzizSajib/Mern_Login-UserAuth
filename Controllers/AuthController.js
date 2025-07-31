@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import UserModel from "../Models/UserModel.js";
 
@@ -144,9 +144,11 @@ export const deleteUser = async (req, res) => {
 export const getUser = async (req, res) => {
   try {
     const users = await UserModel.find({}, "-password -__v"); // exclude password field
+    const total = await UserModel.countDocuments({});
     return res.status(200).json({
       success: true,
       users,
+      total,
     });
   } catch (error) {
     console.error("Get Users Error:", error);
@@ -214,6 +216,95 @@ export const updateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Update User Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// update password
+export const changePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await UserModel.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(403).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedNewPassword;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    console.error("Change Password Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// update Profile
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password } = req.body;
+
+    const user = await UserModel.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Update fields if they are provided
+    if (name) {
+      user.name = name;
+    }
+    if (email) {
+      user.email = email;
+    }
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    const updatedUser = await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        name: updatedUser.name,
+        email: updatedUser.email,
+        _id: updatedUser._id,
+      },
+    });
+  } catch (error) {
+    console.error("Update Profile Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",

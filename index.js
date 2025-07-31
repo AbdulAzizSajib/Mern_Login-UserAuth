@@ -27,7 +27,7 @@ app.get("/ping", (req, res) => {
   res.send("PONG");
 });
 
-app.use("/api/auth", AuthRouter);
+app.use("/api", AuthRouter);
 app.use("/api/products", ProductRouter);
 
 // Start server
