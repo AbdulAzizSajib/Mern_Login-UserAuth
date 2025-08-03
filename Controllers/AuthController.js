@@ -2,9 +2,24 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import UserModel from "../Models/UserModel.js";
 
+const createToken = (user) => {
+  return jwt.sign(
+    {
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      isAdmin: user.isAdmin,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "10h",
+    }
+  );
+};
+
 export const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, isAdmin } = req.body;
     const existingUser = await UserModel.findOne({ email });
 
     if (existingUser) {
@@ -17,15 +32,20 @@ export const signup = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const encryptedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new UserModel({ name, email, password: encryptedPassword });
+    const newUser = new UserModel({
+      name,
+      email,
+      password: encryptedPassword,
+      isAdmin,
+    });
     await newUser.save();
 
-    res.status(201).json({
+    res.json({
       message: "Signup successfully",
       success: true,
     });
   } catch (err) {
-    res.status(500).json({
+    res.json({
       message: "Internal server error",
       success: false,
     });
@@ -37,37 +57,31 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await UserModel.findOne({ email });
-    const error_mailMsg = "User doesn't exist";
-    const error_PassMsg = "Invalid Credentials , try again";
 
     if (!user) {
-      return res.status(403).json({ message: error_mailMsg, success: false });
+      return res.json({ message: "User doesn't exist", success: false });
     }
 
     const isPassMatch = await bcrypt.compare(password, user.password);
     if (!isPassMatch) {
-      return res.status(403).json({ message: error_PassMsg, success: false });
+      return res.json({ message: "Invalid Credentials", success: false });
     }
 
-    const jwtToken = jwt.sign(
-      { email: user.email, _id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
+    const token = createToken(user);
 
-    res.status(200).json({
+    return res.json({
       message: "Login success",
       success: true,
-      jwtToken,
-      // email,
-      // name: user.name,
+      token,
       user: {
         name: user.name,
         email: user.email,
+        _id: user._id,
+        isAdmin: user.isAdmin,
       },
     });
   } catch (err) {
-    res.status(500).json({
+    return res.json({
       message: "Internal server error",
       success: false,
     });
@@ -79,30 +93,49 @@ export const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (
-      email === process.env.ADMIN_EMAIL &&
-      password === process.env.ADMIN_PASSWORD
-    ) {
-      // Create a JWT token with payload
-      const token = jwt.sign({ email }, process.env.JWT_SECRET);
+    const user = await UserModel.findOne({ email });
 
-      return res.json({
-        success: true,
-        token,
-        message: "Welcome admin user",
-      });
-    } else {
-      // Invalid credentials
+    if (!user) {
+      return res.json({ message: "User doesn't exist", success: false });
+    }
+
+    if (!user.isAdmin) {
       return res.json({
         success: false,
-        message: "Invalid credentials",
+        message: "You are not authorized to login",
       });
     }
-  } catch (error) {
-    console.error("Admin Login Error:", error);
+
+    const isPassMatch = await bcrypt.compare(password, user.password);
+
+    if (!isPassMatch) {
+      return res.json({
+        success: false,
+        message: "Invalid Credentials, try again",
+      });
+    }
+
+    if (isPassMatch && user.isAdmin) {
+      const token = createToken(user); // ✅ generate token properly
+
+      return res.json({
+        // ✅ success status
+        success: true,
+        message: "Admin login successful",
+        token,
+        user: {
+          name: user.name,
+          email: user.email,
+          _id: user._id,
+          isAdmin: user.isAdmin,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("Admin Login Error:", err);
     return res.json({
       success: false,
-      message: error.message || "An error occurred",
+      message: "Internal server error",
     });
   }
 };
@@ -115,7 +148,7 @@ export const deleteUser = async (req, res) => {
     // Check if user exists
     const user = await UserModel.findById(id);
     if (!user) {
-      return res.status(404).json({
+      return res.json({
         success: false,
         message: "User not found",
       });
@@ -124,13 +157,13 @@ export const deleteUser = async (req, res) => {
     // Delete user
     await UserModel.findByIdAndDelete(id);
 
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: "User deleted successfully",
     });
   } catch (error) {
     console.error("Delete User Error:", error);
-    return res.status(500).json({
+    return res.json({
       success: false,
       message: "Internal server error",
     });
@@ -145,14 +178,14 @@ export const getUser = async (req, res) => {
   try {
     const users = await UserModel.find({}, "-password -__v"); // exclude password field
     const total = await UserModel.countDocuments({});
-    return res.status(200).json({
+    return res.json({
       success: true,
       users,
       total,
     });
   } catch (error) {
     console.error("Get Users Error:", error);
-    return res.status(500).json({
+    return res.json({
       success: false,
       message: "Internal server error",
     });
@@ -166,19 +199,19 @@ export const getSingleUser = async (req, res) => {
     const user = await UserModel.findById(id, "-password"); // exclude password field
 
     if (!user) {
-      return res.status(404).json({
+      return res.json({
         success: false,
         message: "User not found",
       });
     }
 
-    return res.status(200).json({
+    return res.json({
       success: true,
       user,
     });
   } catch (error) {
     console.error("Get Single User Error:", error);
-    return res.status(500).json({
+    return res.json({
       success: false,
       message: "Internal server error",
     });
@@ -203,20 +236,20 @@ export const updateUser = async (req, res) => {
     });
 
     if (!updatedUser) {
-      return res.status(404).json({
+      return res.json({
         success: false,
         message: "User not found",
       });
     }
 
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: "User updated successfully",
       user: updatedUser,
     });
   } catch (error) {
     console.error("Update User Error:", error);
-    return res.status(500).json({
+    return res.json({
       success: false,
       message: "Internal server error",
     });
@@ -231,7 +264,7 @@ export const changePassword = async (req, res) => {
 
     const user = await UserModel.findById(id);
     if (!user) {
-      return res.status(404).json({
+      return res.json({
         success: false,
         message: "User not found",
       });
@@ -239,7 +272,7 @@ export const changePassword = async (req, res) => {
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(403).json({
+      return res.json({
         success: false,
         message: "Current password is incorrect",
       });
@@ -251,13 +284,13 @@ export const changePassword = async (req, res) => {
     user.password = hashedNewPassword;
     await user.save();
 
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: "Password updated successfully",
     });
   } catch (error) {
     console.error("Change Password Error:", error);
-    return res.status(500).json({
+    return res.json({
       success: false,
       message: "Internal server error",
     });
@@ -273,7 +306,7 @@ export const updateProfile = async (req, res) => {
 
     const user = await UserModel.findById(id);
     if (!user) {
-      return res.status(404).json({
+      return res.json({
         success: false,
         message: "User not found",
       });
@@ -294,7 +327,7 @@ export const updateProfile = async (req, res) => {
 
     const updatedUser = await user.save();
 
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: "Profile updated successfully",
       user: {
@@ -305,7 +338,7 @@ export const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Update Profile Error:", error);
-    return res.status(500).json({
+    return res.json({
       success: false,
       message: "Internal server error",
     });

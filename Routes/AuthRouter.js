@@ -8,11 +8,14 @@ import {
   updateUser,
   updateProfile,
   changePassword,
+  adminLogin,
 } from "../Controllers/AuthController.js";
 import {
   signupValidation,
   loginValidation,
 } from "../Middlewares/AuthValidation.js";
+// import ensureAuthenticated from "../Middlewares/Auth.js";
+import adminAuth from "../Middlewares/adminAuth.js";
 
 const AuthRouter = express.Router();
 
@@ -24,13 +27,14 @@ AuthRouter.get("/health", (req, res) => {
 // Auth routes
 AuthRouter.post("/signup", signupValidation, signup);
 AuthRouter.post("/login", loginValidation, login);
+AuthRouter.post("/admin-login", adminLogin);
 
 // CURD Operations
-AuthRouter.get("/users", getUser);
-AuthRouter.get("/users/:id", getSingleUser);
-AuthRouter.put("/users/:id", updateUser);
-AuthRouter.delete("/users/:id", deleteUser);
-AuthRouter.put("/users/update-profile/:id", updateProfile);
-AuthRouter.put("/users/change-password/:id", changePassword);
+AuthRouter.get("/users", adminAuth, getUser);
+AuthRouter.get("/users/:id", adminAuth, getSingleUser);
+AuthRouter.put("/users/:id", adminAuth, updateUser);
+AuthRouter.delete("/users/:id", adminAuth, deleteUser);
+AuthRouter.put("/users/update-profile/:id", adminAuth, updateProfile);
+AuthRouter.put("/users/change-password/:id", adminAuth, changePassword);
 
 export default AuthRouter;

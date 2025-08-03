@@ -16,11 +16,12 @@ export const signupValidation = (req, res, next) => {
       "string.max": `"password" should have a maximum length of 100`,
       "string.empty": `"password" cannot be an empty field`,
     }),
+    isAdmin: Joi.boolean(),
   });
 
   const { error } = schema.validate(req.body);
   if (error) {
-    return res.status(400).json({
+    return res.json({
       message: "Bad request",
       error: error.details,
     });
@@ -36,7 +37,7 @@ export const loginValidation = (req, res, next) => {
 
   const { error } = schema.validate(req.body);
   if (error) {
-    return res.status(400).json({
+    return res.json({
       message: "Bad request",
       error: error.details,
     });
