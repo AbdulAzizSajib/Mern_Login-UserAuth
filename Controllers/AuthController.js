@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserModel from "../Models/UserModel.js";
 
@@ -302,7 +302,7 @@ export const changePassword = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, password } = req.body;
+    const { name, email, password, isAdmin } = req.body;
 
     const user = await UserModel.findById(id);
     if (!user) {
@@ -334,6 +334,7 @@ export const updateProfile = async (req, res) => {
         name: updatedUser.name,
         email: updatedUser.email,
         _id: updatedUser._id,
+        isAdmin: updatedUser.isAdmin,
       },
     });
   } catch (error) {
