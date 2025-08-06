@@ -21,7 +21,7 @@ ProductRouter.post(
   ]),
   addProduct
 );
-ProductRouter.delete("/delete", deleteProduct);
+ProductRouter.delete("/delete/:id", deleteProduct);
 ProductRouter.get("/list", ProductList);
 ProductRouter.get("/list/:id", ProductListById);
 ProductRouter.put("/update", updateProduct);
