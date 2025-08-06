@@ -1,20 +1,29 @@
 import express from "express";
 import ensureAuthenticated from "../Middlewares/Auth.js";
+import {
+  addProduct,
+  deleteProduct,
+  ProductList,
+  ProductListById,
+  updateProduct,
+} from "../Controllers/ProductController.js";
+import adminAuth from "../Middlewares/adminAuth.js";
+import upload from "../Middlewares/multer.js";
 
-const router = express.Router();
+const ProductRouter = express.Router();
 
-router.get("/", ensureAuthenticated, (req, res) => {
-  console.log("---- logged in user detail ---", req.user);
-  res.status(200).json([
-    {
-      name: "mobile",
-      price: 10000,
-    },
-    {
-      name: "tv",
-      price: 20000,
-    },
-  ]);
-});
+//CRUD Operations
+ProductRouter.post(
+  "/add",
+  upload.fields([
+    { name: "image1", maxCount: 1 },
+    { name: "image2", maxCount: 1 },
+  ]),
+  addProduct
+);
+ProductRouter.delete("/delete", deleteProduct);
+ProductRouter.get("/list", ProductList);
+ProductRouter.get("/list/:id", ProductListById);
+ProductRouter.put("/update", updateProduct);
 
-export default router;
+export default ProductRouter;

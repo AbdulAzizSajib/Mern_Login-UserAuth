@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import AuthRouter from "./Routes/AuthRouter.js";
 import ProductRouter from "./Routes/ProductRouter.js";
 import dbconnect from "./config/mongodb.js";
+import connectCloudinary from "./config/cloudinary.js";
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,9 @@ const PORT = process.env.PORT || 8080;
 
 // Connect to DB
 dbconnect();
+
+//connect to Cloudinary
+connectCloudinary();
 
 // Middlewares
 app.use(express.json());
