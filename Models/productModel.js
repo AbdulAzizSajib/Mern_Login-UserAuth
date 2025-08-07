@@ -1,3 +1,4 @@
+import { request } from "express";
 import mongoose from "mongoose";
 
 const { Schema } = mongoose;
@@ -13,7 +14,7 @@ const ProductSchema = new Schema({
   badge: { type: Boolean },
   isAvailable: { type: Boolean },
   offer: { type: Boolean },
-  description: { type: String, require: true },
+  description: { type: String, request: true },
   tags: { type: Array },
 });
 
