@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 const ProductSchema = new Schema({
   _type: { type: String },
   name: { type: String, require: true },
-  image: { type: Array, require: true },
+  images: { type: Array, require: true },
   price: { type: Number, require: true },
   discountedPercentage: { type: Number },
   category: { type: String, require: true },
@@ -13,7 +13,7 @@ const ProductSchema = new Schema({
   badge: { type: Boolean },
   isAvailable: { type: Boolean },
   offer: { type: Boolean },
-  description: { type: String },
+  description: { type: String, require: true },
   tags: { type: Array },
 });
 

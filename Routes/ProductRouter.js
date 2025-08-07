@@ -1,5 +1,5 @@
 import express from "express";
-import ensureAuthenticated from "../Middlewares/Auth.js";
+
 import {
   addProduct,
   deleteProduct,
@@ -21,9 +21,16 @@ ProductRouter.post(
   ]),
   addProduct
 );
-ProductRouter.delete("/delete", deleteProduct);
+ProductRouter.delete("/delete/:id", deleteProduct);
 ProductRouter.get("/list", ProductList);
 ProductRouter.get("/list/:id", ProductListById);
-ProductRouter.put("/update", updateProduct);
+ProductRouter.put(
+  "/update/:id",
+  upload.fields([
+    { name: "image1", maxCount: 1 },
+    { name: "image2", maxCount: 1 },
+  ]),
+  updateProduct
+);
 
 export default ProductRouter;
